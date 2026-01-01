@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: portfolio-email-api
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      # Add these in Render dashboard instead of here for security
+      # - key: RESEND_API_KEY
+      # - key: TO_EMAIL
+      # - key: FRONTEND_URL
+      # - key: FROM_EMAIL
+      # - key: REPLY_TO_EMAIL
+      # - key: EMAIL_SUBJECT
+
