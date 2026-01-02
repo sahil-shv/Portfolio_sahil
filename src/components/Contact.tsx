@@ -6,7 +6,7 @@ import { messageTemplates } from "../data/messageTemplates";
 
 const API = import.meta.env.VITE_BACKEND_URL;
 
-export default function Contact() {
+export function Contact() {
   const { ref, isInView } = useInView();
   const [formData, setFormData] = useState({
     name: "",
