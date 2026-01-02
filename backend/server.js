@@ -1,103 +1,87 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import rateLimit from 'express-rate-limit';
-import { sendEmail } from './services/emailService.js';
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import rateLimit from "express-rate-limit";
+import { sendEmail } from "./services/emailService.js";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
-app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
-  credentials: true
-}));
+/* 🔧 REQUIRED FOR RENDER */
+app.set("trust proxy", 1);
+
+/* MIDDLEWARE */
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+  })
+);
 app.use(express.json());
 
-// Rate limiting - 5 requests per 15 minutes per IP
+/* RATE LIMIT */
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.',
+  windowMs: 15 * 60 * 1000,
+  max: 5,
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-app.use('/api/contact', limiter);
+app.use("/contact", limiter);
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Email API is running' });
+/* HEALTH CHECK */
+app.get("/health", (req, res) => {
+  res.json({ status: "ok", message: "Email API is running" });
 });
 
-// Contact form endpoint
-app.post('/api/contact', async (req, res) => {
+/* CONTACT FORM */
+app.post("/contact", async (req, res) => {
   try {
-    const { message } = req.body;
+    const { name, email, message } = req.body;
 
-    // Validation
-    if (!message || typeof message !== 'string' || message.trim().length === 0) {
+    if (!message || typeof message !== "string" || !message.trim()) {
       return res.status(400).json({
         success: false,
-        error: 'Message is required and must be a non-empty string'
+        error: "Message is required",
       });
     }
 
     if (message.length > 5000) {
       return res.status(400).json({
         success: false,
-        error: 'Message is too long. Maximum 5000 characters allowed.'
+        error: "Message too long (max 5000 chars)",
       });
     }
 
-    // Send email
-    const emailResult = await sendEmail({
+    const result = await sendEmail({
+      name: name || "Unknown",
+      email: email || "Not provided",
       message: message.trim(),
+      ip: req.ip,
+      userAgent: req.get("user-agent") || "Unknown",
       timestamp: new Date().toISOString(),
-      userAgent: req.get('user-agent') || 'Unknown',
-      ip: req.ip || req.connection.remoteAddress || 'Unknown'
     });
 
-    if (emailResult.success) {
-      res.status(200).json({
-        success: true,
-        message: 'Email sent successfully'
-      });
-    } else {
-      throw new Error(emailResult.error || 'Failed to send email');
-    }
+    if (!result.success) throw new Error(result.error);
 
-  } catch (error) {
-    console.error('Error processing contact form:', error);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error("CONTACT ERROR:", err);
     res.status(500).json({
       success: false,
-      error: 'Internal server error. Please try again later.'
+      error: "Internal server error",
     });
   }
 });
 
-// 404 handler
+/* 404 */
 app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    error: 'Endpoint not found'
-  });
-});
-
-// Error handler
-app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
-  res.status(500).json({
-    success: false,
-    error: 'Internal server error'
-  });
+  res.status(404).json({ success: false, error: "Not found" });
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Email API server running on port ${PORT}`);
-  console.log(`📧 Email service: ${process.env.EMAIL_SERVICE || 'Resend'}`);
-  console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'Not set'}`);
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL}`);
 });
-
