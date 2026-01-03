@@ -8,7 +8,6 @@ import { Contact } from './components/Contact';
 
 export default function App() {
   const [scrolled, setScrolled] = useState(false);
-  const [contactTemplate, setContactTemplate] = useState<string | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -18,36 +17,14 @@ export default function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleServiceSelect = (serviceTitle: string) => {
-    setContactTemplate(serviceTitle);
-    
-    // Scroll to contact section after a brief delay
-    setTimeout(() => {
-      const element = document.getElementById('contact');
-      if (element) {
-        const offset = 80;
-        const elementPosition = element.getBoundingClientRect().top;
-        const offsetPosition = elementPosition + window.pageYOffset - offset;
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: 'smooth'
-        });
-      }
-    }, 100);
-  };
-
-  const handleTemplateUsed = () => {
-    setContactTemplate(null);
-  };
-
   return (
     <div className="min-h-screen bg-[#E6EEF1]">
       <Navigation scrolled={scrolled} />
       <Hero />
       <Work />
-      <Services onServiceSelect={handleServiceSelect} />
+      <Services />
       <About />
-      <Contact templateMessage={contactTemplate} onTemplateUsed={handleTemplateUsed} />
+      <Contact />
     </div>
   );
 }
