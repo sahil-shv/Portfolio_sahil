@@ -482,7 +482,7 @@ export function Contact({ templateMessage, onTemplateUsed }: ContactProps) {
       
       try {
         const apiUrl = import.meta.env.VITE_API_URL || 'https://your-api.onrender.com';
-        const response = await fetch(`${apiUrl}/api/contact`, {
+        const response = await fetch(`${apiUrl}/contact`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
