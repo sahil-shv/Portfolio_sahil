@@ -479,37 +479,28 @@ export function Contact({ templateMessage, onTemplateUsed }: ContactProps) {
     if (message.trim()) {
       setIsSending(true);
       setError(null);
-      
+
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'https://your-api.onrender.com';
-        const response = await fetch(`${apiUrl}/contact`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ message: message.trim() }),
-        });
+        const contactEmail = import.meta.env.VITE_CONTACT_EMAIL || 'you@yourdomain.com';
+        const subject = encodeURIComponent('Website contact');
+        const body = encodeURIComponent(`${message.trim()}\n\n--\nSent from: ${window.location.href}`);
 
-        const data = await response.json();
+        // Open user's mail client
+        window.location.href = `mailto:${contactEmail}?subject=${subject}&body=${body}`;
 
-        if (response.ok && data.success) {
-          setIsSending(false);
-          setIsSent(true);
-          
-          // Reset after 3 seconds
-          setTimeout(() => {
-            setMessage('');
-            setIsSent(false);
-          }, 3000);
-        } else {
-          throw new Error(data.error || 'Failed to send message');
-        }
-      } catch (err) {
-        console.error('Error sending message:', err);
+        // Give UI feedback (mailto opens external client)
         setIsSending(false);
-        setError(err instanceof Error ? err.message : 'Failed to send message. Please try again.');
-        
-        // Clear error after 5 seconds
+        setIsSent(true);
+
+        // Reset after 3 seconds
+        setTimeout(() => {
+          setMessage('');
+          setIsSent(false);
+        }, 3000);
+      } catch (err) {
+        console.error('Error preparing mailto:', err);
+        setIsSending(false);
+        setError('Failed to open mail client. Please copy and send your message manually.');
         setTimeout(() => {
           setError(null);
         }, 5000);
